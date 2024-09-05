@@ -106,17 +106,18 @@ func main() {
 					if err != nil {
 						log.Println(err)
 					}
-				}
-				log.Println("Received MESSAGE_CREATED event: " + p.Message.Text)
-				_, _, err = bot.API().
-					MessageApi.
-					PostMessage(context.Background(), p.Message.ChannelID).
-					PostMessageRequest(traq.PostMessageRequest{
-						Content: fmt.Sprintf("以下の成績で受け付けました。何か誤りがある場合はkaitoyamaをメンションしてください\nユーザー名: %s\nレベル: %d\nミスタイプ数: %d\nスピード: %d\n正確性: %.2f", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy),
-					}).
-					Execute()
-				if err != nil {
-					log.Println(err)
+				} else {
+					log.Println("Received MESSAGE_CREATED event: " + p.Message.Text)
+					_, _, err = bot.API().
+						MessageApi.
+						PostMessage(context.Background(), p.Message.ChannelID).
+						PostMessageRequest(traq.PostMessageRequest{
+							Content: fmt.Sprintf("以下の成績で受け付けました。何か誤りがある場合はkaitoyamaをメンションしてください\nユーザー名: %s\nレベル: %d\nミスタイプ数: %d\nスピード: %d\n正確性: %.1f", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy),
+						}).
+						Execute()
+					if err != nil {
+						log.Println(err)
+					}
 				}
 			}
 		}
