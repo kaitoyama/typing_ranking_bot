@@ -34,10 +34,17 @@ type ImageProc struct {
 }
 
 func GetTop16(db *sql.DB, channelID string) {
-	// top16を取得してmdのテーブルとしてmessageに投稿する
-	rows, err := db.Query("SELECT user_name, level, miss_type_count, speed, accuracy, score FROM image_proc ORDER BY score DESC LIMIT 16")
+	// top16のuserを取得してmdのテーブルとしてmessageに投稿する
+	rows, err := db.Query(`
+		SELECT user_name, MAX(score) AS best_score, level, miss_type_count, speed, accuracy
+		FROM image_proc
+		GROUP BY user_name, level, miss_type_count, speed, accuracy
+		ORDER BY best_score DESC
+		LIMIT 16
+	`)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 	defer rows.Close()
 
@@ -47,6 +54,7 @@ func GetTop16(db *sql.DB, channelID string) {
 		err := rows.Scan(&score.UserName, &score.Level, &score.MissTypeCount, &score.Speed, &score.Accuracy)
 		if err != nil {
 			log.Println(err)
+			continue
 		}
 		top16 = append(top16, score)
 	}
@@ -82,7 +90,6 @@ func GetTop16(db *sql.DB, channelID string) {
 	if err != nil {
 		log.Println(err)
 	}
-
 }
 
 func main() {
@@ -167,7 +174,7 @@ func main() {
 					}
 				} else {
 					log.Println("Received MESSAGE_CREATED event: " + p.Message.Text)
-					_, err := db.Exec("INSERT INTO image_proc (user_name, level, miss_type_count, speed, accuracy, score) VALUES (?, ?, ?, ?, ?)", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, float32(score.Speed-score.MissTypeCount)*score.Accuracy)
+					_, err := db.Exec("INSERT INTO image_proc (user_name, level, miss_type_count, speed, accuracy, score) VALUES (?, ?, ?, ?, ?, ?)", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, float32(score.Speed-score.MissTypeCount)*score.Accuracy)
 					if err != nil {
 						log.Println(err)
 					}
