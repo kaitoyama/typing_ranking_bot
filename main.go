@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -174,14 +176,24 @@ func main() {
 			// !fix id column value
 			if p.Message.Text[:5] == "!fix " {
 				// !fix id column value
-				id := 0
-				cName := ""
-				value := any(0)
-				_, err := fmt.Sscanf(p.Message.Text[5:], "%d %s %v", &id, &cName, &value)
+				// spaceを使って分割してstringの配列にする
+				s := p.Message.Text[5:]
+				split := func(c rune) bool {
+					return c == ' '
+				}
+				// 3つに分割する
+				splitText := strings.FieldsFunc(s, split)
+				// idをintに変換
+				id, err := strconv.Atoi(splitText[0])
 				if err != nil {
 					log.Println(err)
 					return
 				}
+				// column名
+				cName := splitText[1]
+				// value(型はinterface)
+				value := splitText[2]
+				// 修正
 				fix(id, cName, value, db)
 				GetTop16(db, p.Message.ChannelID, true)
 				return
@@ -295,11 +307,31 @@ func image_proc(imagebasee64 string) string {
 	return resp.Choices[0].Message.Content
 }
 
-func fix(id int, cName string, value any, db *sql.DB) {
-	// idとカラムと修正後の値をうけて、その項目とスコアを修正する
-	_, err := db.Exec("UPDATE image_proc SET ? = ? WHERE id = ?", cName, value, id)
-	if err != nil {
-		log.Println(err)
+func fix(id int, cName string, value string, db *sql.DB) {
+	if cName == "accuracy" {
+		// valueをfloatに変換
+		f, err := strconv.ParseFloat(value, 32)
+		if err != nil {
+			log.Println(err)
+		}
+		// idとカラムと修正後の値をうけて、その項目とスコアを修正する
+		_, err = db.Exec("UPDATE image_proc SET ? = ? WHERE id = ?", cName, f, id)
+		if err != nil {
+			log.Println(err)
+		}
+
+	} else {
+		// valueをintに変換
+		i, err := strconv.Atoi(value)
+		if err != nil {
+			log.Println(err)
+		}
+		// idとカラムと修正後の値をうけて、その項目とスコアを修正する
+		_, err = db.Exec("UPDATE image_proc SET ? = ? WHERE id = ?", cName, i, id)
+		if err != nil {
+			log.Println(err)
+		}
+
 	}
 
 	// 修正後のスコアを計算して修正する
