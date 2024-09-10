@@ -143,6 +143,7 @@ func main() {
 		if len(images) == 0 {
 			if p.Message.Text == "!top16" {
 				GetTop16(db, p.Message.ChannelID, true)
+				return
 			}
 			_, _, err := bot.API().
 				MessageApi.
