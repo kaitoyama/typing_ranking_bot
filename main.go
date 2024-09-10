@@ -34,7 +34,7 @@ type ImageProc struct {
 	Score         float32 `json:"score"`
 }
 
-func GetTop16(db *sql.DB, channelID string) {
+func GetTop16(db *sql.DB, channelID string, forceOutput bool) {
 	// top16のuserを取得してmdのテーブルとしてmessageに投稿する
 	rows, err := db.Query(`
 		SELECT user_name, MAX(score) AS best_score, level, miss_type_count, speed, accuracy
@@ -60,18 +60,18 @@ func GetTop16(db *sql.DB, channelID string) {
 		top16 = append(top16, score)
 	}
 
-	// 今回のtop16が前回のtop16と異なる場合にのみ投稿する
-	if len(currentTop16) == len(top16) {
-		isSame := true
+	// 今回のtop16がスコア含めて前回のtop16と異なる場合にのみ投稿するが、forceOutputがtrueの場合は無条件で投稿する
+	if !forceOutput && len(top16) == len(currentTop16) {
 		for i := 0; i < len(top16); i++ {
-			if top16[i].UserName != currentTop16[i].UserName {
-				isSame = false
+			if top16[i].UserName != currentTop16[i].UserName || top16[i].Level != currentTop16[i].Level || top16[i].MissTypeCount != currentTop16[i].MissTypeCount || top16[i].Speed != currentTop16[i].Speed || top16[i].Accuracy != currentTop16[i].Accuracy || top16[i].Score != currentTop16[i].Score {
+				forceOutput = true
 				break
 			}
 		}
-		if isSame {
-			return
-		}
+	}
+
+	if !forceOutput {
+		return
 	}
 
 	currentTop16 = top16
@@ -141,6 +141,9 @@ func main() {
 	bot.OnMessageCreated(func(p *payload.MessageCreated) {
 		images := GetBase64ImagesFromMessage(p.Message.Text)
 		if len(images) == 0 {
+			if p.Message.Text == "!top16" {
+				GetTop16(db, p.Message.ChannelID, true)
+			}
 			_, _, err := bot.API().
 				MessageApi.
 				PostMessage(context.Background(), p.Message.ChannelID).
@@ -180,7 +183,7 @@ func main() {
 						log.Println(err)
 					}
 
-					GetTop16(db, p.Message.ChannelID)
+					GetTop16(db, p.Message.ChannelID, false)
 					_, _, err = bot.API().
 						MessageApi.
 						PostMessage(context.Background(), p.Message.ChannelID).
