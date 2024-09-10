@@ -31,6 +31,7 @@ type ImageProc struct {
 	MissTypeCount int     `json:"miss_type_count"`
 	Speed         int     `json:"speed"`
 	Accuracy      float32 `json:"accuracy"`
+	Score         float32 `json:"score"`
 }
 
 func GetTop16(db *sql.DB, channelID string) {
@@ -51,7 +52,7 @@ func GetTop16(db *sql.DB, channelID string) {
 	top16 := make([]ImageProc, 0)
 	for rows.Next() {
 		var score ImageProc
-		err := rows.Scan(&score.UserName, &score.Level, &score.MissTypeCount, &score.Speed, &score.Accuracy)
+		err := rows.Scan(&score.UserName, &score.Level, &score.MissTypeCount, &score.Speed, &score.Accuracy, &score.Score)
 		if err != nil {
 			log.Println(err)
 			continue
