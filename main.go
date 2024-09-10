@@ -240,7 +240,7 @@ func image_proc(imagebasee64 string) string {
 	part.Type = openai.ChatMessagePartTypeImageURL
 	part.ImageURL = &openai.ChatMessageImageURL{
 		URL:    "data:image/jpeg;base64," + imagebasee64,
-		Detail: openai.ImageURLDetailAuto,
+		Detail: openai.ImageURLDetailLow,
 	}
 
 	schema, err := jsonschema.GenerateSchemaForType(ImageProc{})
