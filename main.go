@@ -37,11 +37,32 @@ type ImageProc struct {
 func GetTop16(db *sql.DB, channelID string, forceOutput bool) {
 	// top16のuserを取得してmdのテーブルとしてmessageに投稿する
 	rows, err := db.Query(`
-		SELECT user_name, level, miss_type_count, speed, accuracy, MAX(score) AS best_score
-		FROM image_proc
-		GROUP BY user_name, level, miss_type_count, speed, accuracy
-		ORDER BY best_score DESC
-		LIMIT 16
+		WITH RankedScores AS (
+			SELECT 
+				user_name, 
+				level, 
+				miss_type_count, 
+				speed, 
+				accuracy, 
+				score,
+				ROW_NUMBER() OVER (PARTITION BY user_name ORDER BY score DESC) AS rank
+			FROM 
+				image_proc
+		)
+		SELECT 
+			user_name, 
+			level, 
+			miss_type_count, 
+			speed, 
+			accuracy, 
+			score AS best_score
+		FROM 
+			RankedScores
+		WHERE 
+			rank = 1
+		ORDER BY 
+			best_score DESC
+		LIMIT 16;
 	`)
 	if err != nil {
 		log.Println(err)
