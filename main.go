@@ -316,7 +316,8 @@ func fix(id int, cName string, value string, db *sql.DB) {
 			log.Println(err)
 		}
 		// idとカラムと修正後の値をうけて、その項目とスコアを修正する
-		_, err = db.Exec("UPDATE image_proc SET ? = ? WHERE id = ?", cName, f, id)
+		query := fmt.Sprintf("UPDATE image_proc SET %s = ? WHERE id = ?", cName)
+		_, err = db.Exec(query, f, id)
 		if err != nil {
 			log.Println(err)
 		}
@@ -328,7 +329,8 @@ func fix(id int, cName string, value string, db *sql.DB) {
 			log.Println(err)
 		}
 		// idとカラムと修正後の値をうけて、その項目とスコアを修正する
-		_, err = db.Exec("UPDATE image_proc SET ? = ? WHERE id = ?", cName, i, id)
+		query := fmt.Sprintf("UPDATE image_proc SET %s = ? WHERE id = ?", cName)
+		_, err = db.Exec(query, i, id)
 		if err != nil {
 			log.Println(err)
 		}
