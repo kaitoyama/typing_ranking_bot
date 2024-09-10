@@ -70,6 +70,11 @@ func GetTop16(db *sql.DB, channelID string, forceOutput bool) {
 		}
 	}
 
+	// 人数が違うなら無条件で投稿する
+	if !forceOutput && len(top16) != len(currentTop16) {
+		forceOutput = true
+	}
+
 	if !forceOutput {
 		return
 	}
