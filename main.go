@@ -171,6 +171,21 @@ func main() {
 				GetTop16(db, p.Message.ChannelID, true)
 				return
 			}
+			// !fix id column value
+			if p.Message.Text[:5] == "!fix " {
+				// !fix id column value
+				id := 0
+				cName := ""
+				value := any(0)
+				_, err := fmt.Sscanf(p.Message.Text[5:], "%d %s %v", &id, &cName, &value)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				fix(id, cName, value, db)
+				GetTop16(db, p.Message.ChannelID, true)
+				return
+			}
 			_, _, err := bot.API().
 				MessageApi.
 				PostMessage(context.Background(), p.Message.ChannelID).
@@ -278,4 +293,31 @@ func image_proc(imagebasee64 string) string {
 	}
 
 	return resp.Choices[0].Message.Content
+}
+
+func fix(id int, cName string, value any, db *sql.DB) {
+	// idとカラムと修正後の値をうけて、その項目とスコアを修正する
+	_, err := db.Exec("UPDATE image_proc SET ? = ? WHERE id = ?", cName, value, id)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// 修正後のスコアを計算して修正する
+	rows, err := db.Query("SELECT * FROM image_proc WHERE id = ?", id)
+	if err != nil {
+		log.Println(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var score ImageProc
+		err := rows.Scan(&score.UserName, &score.Level, &score.MissTypeCount, &score.Speed, &score.Accuracy, &score.Score)
+		if err != nil {
+			log.Println(err)
+		}
+		_, err = db.Exec("UPDATE image_proc SET score = ? WHERE id = ?", (float32(float32(score.Speed)*score.Accuracy-float32(score.MissTypeCount))*score.Accuracy)+float32(score.Speed), id)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }
