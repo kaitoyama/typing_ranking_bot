@@ -83,7 +83,7 @@ func GetTop16(db *sql.DB, channelID string, forceOutput bool) {
 
 	message := "## Top16が更新されました!\n| ユーザー名 | レベル | ミスタイプ数 | スピード | 正確性 | スコア |\n| --- | --- | --- | --- | --- | --- |\n"
 	for _, score := range top16 {
-		message += fmt.Sprintf("| %s | %d | %d | %d | %.1f | %.1f |\n", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, float32(score.Speed-score.MissTypeCount)*score.Accuracy)
+		message += fmt.Sprintf("| %s | %d | %d | %d | %.1f | %.1f |\n", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, score.Score)
 	}
 
 	_, _, err = bot.API().
