@@ -84,9 +84,11 @@ func GetTop16(db *sql.DB, channelID string) {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println(err)
+	if os.Getenv("nsapp_3c8306bdfe0c62cd462ed2") != "" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	jst, err := time.LoadLocation("Asia/Tokyo")
@@ -98,7 +100,7 @@ func main() {
 		DBName:    os.Getenv("NS_MARIADB_DATABASE"),
 		User:      os.Getenv("NS_MARIADB_USER"),
 		Passwd:    os.Getenv("NS_MARIADB_PASSWORD"),
-		Addr:      os.Getenv("NS_MARIADB_HOST") + ":" + os.Getenv("NS_MARIADB_PORT"),
+		Addr:      os.Getenv("NS_MARIADB_HOSTNAME") + ":" + os.Getenv("NS_MARIADB_PORT"),
 		Net:       "tcp",
 		ParseTime: true,
 		Collation: "utf8mb4_unicode_ci",
