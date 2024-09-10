@@ -65,6 +65,8 @@ func GetTop16(db *sql.DB, channelID string) {
 		}
 	}
 
+	currentTop16 = top16
+
 	message := "## Top16\n| ユーザー名 | レベル | ミスタイプ数 | スピード | 正確性 | スコア |\n| --- | --- | --- | --- | --- | --- |\n"
 	for _, score := range top16 {
 		message += fmt.Sprintf("| %s | %d | %d | %d | %.1f | %.1f |\n", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, float32(score.Speed-score.MissTypeCount)*score.Accuracy)
@@ -166,6 +168,11 @@ func main() {
 				} else {
 					log.Println("Received MESSAGE_CREATED event: " + p.Message.Text)
 					_, err := db.Exec("INSERT INTO image_proc (user_name, level, miss_type_count, speed, accuracy, score) VALUES (?, ?, ?, ?, ?)", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, float32(score.Speed-score.MissTypeCount)*score.Accuracy)
+					if err != nil {
+						log.Println(err)
+					}
+
+					GetTop16(db, p.Message.ChannelID)
 					_, _, err = bot.API().
 						MessageApi.
 						PostMessage(context.Background(), p.Message.ChannelID).
