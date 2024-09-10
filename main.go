@@ -308,6 +308,7 @@ func image_proc(imagebasee64 string) string {
 }
 
 func fix(id int, cName string, value string, db *sql.DB) {
+	fmt.Println(id, cName, value)
 	if cName == "accuracy" {
 		// valueをfloatに変換
 		f, err := strconv.ParseFloat(value, 32)
