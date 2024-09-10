@@ -338,7 +338,12 @@ func fix(id int, cName string, value string, db *sql.DB) {
 	}
 
 	// 修正後のスコアを計算して修正する
-	rows, err := db.Query("SELECT * FROM image_proc WHERE id = ?", id)
+	rows, err := db.Query(`SELECT user_name, 
+				level, 
+				miss_type_count, 
+				speed, 
+				accuracy, 
+				score, FROM image_proc WHERE id = ?`, id)
 	if err != nil {
 		log.Println(err)
 	}
