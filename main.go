@@ -84,7 +84,7 @@ func GetTop16(db *sql.DB, channelID string) {
 }
 
 func main() {
-	if os.Getenv("nsapp_3c8306bdfe0c62cd462ed2") != "" {
+	if os.Getenv("nsapp_3c8306bdfe0c62cd462ed2") == "" {
 		err := godotenv.Load()
 		if err != nil {
 			log.Println(err)
@@ -97,14 +97,15 @@ func main() {
 	}
 
 	c := mysql.Config{
-		DBName:    os.Getenv("NS_MARIADB_DATABASE"),
-		User:      os.Getenv("NS_MARIADB_USER"),
-		Passwd:    os.Getenv("NS_MARIADB_PASSWORD"),
-		Addr:      os.Getenv("NS_MARIADB_HOSTNAME") + ":" + os.Getenv("NS_MARIADB_PORT"),
-		Net:       "tcp",
-		ParseTime: true,
-		Collation: "utf8mb4_unicode_ci",
-		Loc:       jst,
+		DBName:               os.Getenv("NS_MARIADB_DATABASE"),
+		User:                 os.Getenv("NS_MARIADB_USER"),
+		Passwd:               os.Getenv("NS_MARIADB_PASSWORD"),
+		Addr:                 os.Getenv("NS_MARIADB_HOSTNAME") + ":" + os.Getenv("NS_MARIADB_PORT"),
+		Net:                  "tcp",
+		ParseTime:            true,
+		Collation:            "utf8mb4_unicode_ci",
+		Loc:                  jst,
+		AllowNativePasswords: true,
 	}
 
 	db, err := sql.Open("mysql", c.FormatDSN())
