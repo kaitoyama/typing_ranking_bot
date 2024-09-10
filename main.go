@@ -343,7 +343,7 @@ func fix(id int, cName string, value string, db *sql.DB) {
 				miss_type_count, 
 				speed, 
 				accuracy, 
-				score, FROM image_proc WHERE id = ?`, id)
+				score FROM image_proc WHERE id = ?`, id)
 	if err != nil {
 		log.Println(err)
 	}
