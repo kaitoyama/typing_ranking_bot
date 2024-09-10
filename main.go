@@ -83,7 +83,7 @@ func GetTop16(db *sql.DB, channelID string, forceOutput bool) {
 
 	message := "## Top16が更新されました!\n| ユーザー名 | レベル | ミスタイプ数 | スピード | 正確性 | スコア |\n| --- | --- | --- | --- | --- | --- |\n"
 	for _, score := range top16 {
-		message += fmt.Sprintf("| %s | %d | %d | %d | %.1f | %.1f |\n", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, score.Score)
+		message += fmt.Sprintf("| %s | %d | %d | %d | %.3f | %.2f |\n", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, score.Score)
 	}
 
 	_, _, err = bot.API().
@@ -195,7 +195,7 @@ func main() {
 						MessageApi.
 						PostMessage(context.Background(), p.Message.ChannelID).
 						PostMessageRequest(traq.PostMessageRequest{
-							Content: fmt.Sprintf("以下の成績で受け付けました。何か誤りがある場合はkaitoyamaをメンションしてください\nユーザー名: %s\nレベル: %d\nミスタイプ数: %d\nスピード: %d\n正確性: %.1f\nスコア: %.1f", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, (float32(float32(score.Speed)*score.Accuracy-float32(score.MissTypeCount))*score.Accuracy)+float32(score.Speed)),
+							Content: fmt.Sprintf("以下の成績で受け付けました。何か誤りがある場合はkaitoyamaをメンションしてください\nユーザー名: %s\nレベル: %d\nミスタイプ数: %d\nスピード: %d\n正確性: %.3f\nスコア: %.2f", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, (float32(float32(score.Speed)*score.Accuracy-float32(score.MissTypeCount))*score.Accuracy)+float32(score.Speed)),
 						}).
 						Execute()
 					if err != nil {
