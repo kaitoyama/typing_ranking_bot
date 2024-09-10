@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	bot *traqwsbot.Bot
+	bot          *traqwsbot.Bot
+	currentTop16 []ImageProc
 )
 
 type ImageProc struct {
@@ -30,6 +31,56 @@ type ImageProc struct {
 	MissTypeCount int     `json:"miss_type_count"`
 	Speed         int     `json:"speed"`
 	Accuracy      float32 `json:"accuracy"`
+}
+
+func GetTop16(db *sql.DB, channelID string) {
+	// top16を取得してmdのテーブルとしてmessageに投稿する
+	rows, err := db.Query("SELECT user_name, level, miss_type_count, speed, accuracy, score FROM image_proc ORDER BY score DESC LIMIT 16")
+	if err != nil {
+		log.Println(err)
+	}
+	defer rows.Close()
+
+	top16 := make([]ImageProc, 0)
+	for rows.Next() {
+		var score ImageProc
+		err := rows.Scan(&score.UserName, &score.Level, &score.MissTypeCount, &score.Speed, &score.Accuracy)
+		if err != nil {
+			log.Println(err)
+		}
+		top16 = append(top16, score)
+	}
+
+	// 今回のtop16が前回のtop16と異なる場合にのみ投稿する
+	if len(currentTop16) == len(top16) {
+		isSame := true
+		for i := 0; i < len(top16); i++ {
+			if top16[i].UserName != currentTop16[i].UserName {
+				isSame = false
+				break
+			}
+		}
+		if isSame {
+			return
+		}
+	}
+
+	message := "## Top16\n| ユーザー名 | レベル | ミスタイプ数 | スピード | 正確性 | スコア |\n| --- | --- | --- | --- | --- | --- |\n"
+	for _, score := range top16 {
+		message += fmt.Sprintf("| %s | %d | %d | %d | %.1f | %.1f |\n", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, float32(score.Speed-score.MissTypeCount)*score.Accuracy)
+	}
+
+	_, _, err = bot.API().
+		MessageApi.
+		PostMessage(context.Background(), channelID).
+		PostMessageRequest(traq.PostMessageRequest{
+			Content: message,
+		}).
+		Execute()
+	if err != nil {
+		log.Println(err)
+	}
+
 }
 
 func main() {
@@ -61,8 +112,11 @@ func main() {
 
 	defer db.Close()
 
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS image_proc (id INT AUTO_INCREMENT PRIMARY KEY, user_name VARCHAR(255), level INT, miss_type_count INT, speed INT, accuracy FLOAT)")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS image_proc (id INT AUTO_INCREMENT PRIMARY KEY, user_name VARCHAR(255), level INT, miss_type_count INT, speed INT, accuracy FLOAT, score FLOAT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
 
+	if err != nil {
+		log.Println(err)
+	}
 	ACCESS_TOKEN := os.Getenv("ACCESS_TOKEN")
 	bot, err = traqwsbot.NewBot(&traqwsbot.Options{
 		AccessToken: ACCESS_TOKEN,
@@ -108,11 +162,12 @@ func main() {
 					}
 				} else {
 					log.Println("Received MESSAGE_CREATED event: " + p.Message.Text)
+					_, err := db.Exec("INSERT INTO image_proc (user_name, level, miss_type_count, speed, accuracy, score) VALUES (?, ?, ?, ?, ?)", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, float32(score.Speed-score.MissTypeCount)*score.Accuracy)
 					_, _, err = bot.API().
 						MessageApi.
 						PostMessage(context.Background(), p.Message.ChannelID).
 						PostMessageRequest(traq.PostMessageRequest{
-							Content: fmt.Sprintf("以下の成績で受け付けました。何か誤りがある場合はkaitoyamaをメンションしてください\nユーザー名: %s\nレベル: %d\nミスタイプ数: %d\nスピード: %d\n正確性: %.1f", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy),
+							Content: fmt.Sprintf("以下の成績で受け付けました。何か誤りがある場合はkaitoyamaをメンションしてください\nユーザー名: %s\nレベル: %d\nミスタイプ数: %d\nスピード: %d\n正確性: %.1f\nスコア: %.1f", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, float32(score.Speed-score.MissTypeCount)*score.Accuracy),
 						}).
 						Execute()
 					if err != nil {
