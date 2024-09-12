@@ -233,7 +233,7 @@ func main() {
 					}
 				} else {
 					log.Println("Received MESSAGE_CREATED event: " + p.Message.Text)
-					_, err := db.Exec("INSERT INTO image_proc (user_name, level, miss_type_count, speed, accuracy, score) VALUES (?, ?, ?, ?, ?, ?)", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, (float32(float32(score.Speed)*score.Accuracy-float32(score.MissTypeCount))*score.Accuracy)+float32(score.Speed))
+					_, err := db.Exec("INSERT INTO image_proc (user_name, level, miss_type_count, speed, accuracy, score) VALUES (?, ?, ?, ?, ?, ?)", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, (91.5-float32(score.MissTypeCount))*score.Accuracy+float32(score.Speed))
 					if err != nil {
 						log.Println(err)
 					}
@@ -243,7 +243,7 @@ func main() {
 						MessageApi.
 						PostMessage(context.Background(), p.Message.ChannelID).
 						PostMessageRequest(traq.PostMessageRequest{
-							Content: fmt.Sprintf("以下の成績で受け付けました。何か誤りがある場合はkaitoyamaをメンションしてください\nユーザー名: %s\nレベル: %d\nミスタイプ数: %d\nスピード: %d\n正確性: %.3f\nスコア: %.2f", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, (float32(float32(score.Speed)*score.Accuracy-float32(score.MissTypeCount))*score.Accuracy)+float32(score.Speed)),
+							Content: fmt.Sprintf("以下の成績で受け付けました。何か誤りがある場合はkaitoyamaをメンションしてください\nユーザー名: %s\nレベル: %d\nミスタイプ数: %d\nスピード: %d\n正確性: %.3f\nスコア: %.2f", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, (float32(91.5-float32(score.MissTypeCount))*score.Accuracy)+float32(score.Speed)),
 						}).
 						Execute()
 					if err != nil {
