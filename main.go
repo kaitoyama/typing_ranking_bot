@@ -218,7 +218,6 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			} else {
-				score.Accuracy = score.Accuracy * 0.01
 				if score.Level != 5 {
 					log.Println("Received MESSAGE_CREATED event: " + p.Message.Text)
 					_, _, err = bot.API().
