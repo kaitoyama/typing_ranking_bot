@@ -425,7 +425,7 @@ func fix(id int, cName string, value string, db *sql.DB) {
 		if err != nil {
 			log.Println(err)
 		}
-		_, err = db.Exec("UPDATE image_proc SET score = ? WHERE id = ?", (float32(float32(score.Speed)*score.Accuracy-float32(score.MissTypeCount))*score.Accuracy)+float32(score.Speed), id)
+		_, err = db.Exec("UPDATE image_proc SET score = ? WHERE id = ?", (91.5-float32(score.MissTypeCount))*score.Accuracy+float32(score.Speed), id)
 		if err != nil {
 			log.Println(err)
 		}
