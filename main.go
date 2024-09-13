@@ -121,6 +121,73 @@ func GetTop16(db *sql.DB, channelID string, forceOutput bool) {
 	}
 }
 
+func GetTopAll(db *sql.DB, channelID string, forceOutput bool) {
+	// top16のuserを取得してmdのテーブルとしてmessageに投稿する
+	rows, err := db.Query(`
+		WITH RankedScores AS (
+			SELECT 
+				user_name, 
+				level, 
+				miss_type_count, 
+				speed, 
+				accuracy, 
+				score,
+				ROW_NUMBER() OVER (PARTITION BY user_name ORDER BY score DESC) AS rank
+			FROM 
+				image_proc
+		)
+		SELECT 
+			user_name, 
+			level, 
+			miss_type_count, 
+			speed, 
+			accuracy, 
+			score AS best_score
+		FROM 
+			RankedScores
+		WHERE 
+			rank = 1
+		ORDER BY 
+			best_score DESC;
+	`)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	ranking := make([]ImageProc, 0)
+	for rows.Next() {
+		var score ImageProc
+		err := rows.Scan(&score.UserName, &score.Level, &score.MissTypeCount, &score.Speed, &score.Accuracy, &score.Score)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		ranking = append(ranking, score)
+	}
+
+	message := "## 全体ranking!\n| ユーザー名 | レベル | ミスタイプ数 | スピード | 正確性 | スコア |\n| --- | --- | --- | --- | --- | --- |\n"
+	for i, score := range ranking {
+		message += fmt.Sprintf("| %s | %d | %d | %d | %.3f | %.2f |\n", score.UserName, score.Level, score.MissTypeCount, score.Speed, score.Accuracy, score.Score)
+		if i == 15 {
+			// 区切り線を入れる
+			message += "| --- | --- | --- | --- | --- | --- |\n"
+		}
+	}
+
+	_, _, err = bot.API().
+		MessageApi.
+		PostMessage(context.Background(), channelID).
+		PostMessageRequest(traq.PostMessageRequest{
+			Content: message,
+		}).
+		Execute()
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func main() {
 	if os.Getenv("nsapp_3c8306bdfe0c62cd462ed2") == "" {
 		err := godotenv.Load()
@@ -173,8 +240,12 @@ func main() {
 				GetTop16(db, p.Message.ChannelID, true)
 				return
 			}
+			if p.Message.Text == "!topall" {
+				GetTopAll(db, p.Message.ChannelID, true)
+				return
+			}
 			// !fix id column value
-			if p.Message.Text[:5] == "!fix " {
+			if len(p.Message.Text) > 5 && p.Message.Text[:5] == "!fix " {
 				// !fix id column value
 				// spaceを使って分割してstringの配列にする
 				s := p.Message.Text[5:]
