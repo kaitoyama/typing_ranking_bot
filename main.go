@@ -352,8 +352,12 @@ func image_proc(message payload.Message, imagebasee64 string) string {
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleUser,
-					Content: "ユーザー名のヒントです" + message.User.Name + "," + message.User.DisplayName,
+					Content: "",
 					MultiContent: []openai.ChatMessagePart{
+						{
+							Type: openai.ChatMessagePartTypeText,
+							Text: "ユーザー名のヒントです" + message.User.Name + "," + message.User.DisplayName,
+						},
 						part,
 					},
 				},
