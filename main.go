@@ -280,7 +280,7 @@ func main() {
 				log.Println(err)
 			}
 		} else {
-			message := image_proc(images[0])
+			message := image_proc(p.Message, images[0])
 			// message is like a JSON string
 			// {"user_name":"sashabaranov","level":1,"miss_type_count":0,"speed":0,"accuracy":0}
 			// We can parse it to a struct
@@ -329,7 +329,7 @@ func main() {
 	}
 }
 
-func image_proc(imagebasee64 string) string {
+func image_proc(message payload.Message, imagebasee64 string) string {
 	TOKEN := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(TOKEN)
 
@@ -352,7 +352,7 @@ func image_proc(imagebasee64 string) string {
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleUser,
-					Content: "",
+					Content: "ユーザー名のヒントです" + message.User.Name + "," + message.User.DisplayName,
 					MultiContent: []openai.ChatMessagePart{
 						part,
 					},
